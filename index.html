@@ -6,7 +6,7 @@
 <title>رأيك في أسلوب التدريس</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 :root{
   --bg:#F2F4F8; --surface:#FFFFFF; --ink:#16213A; --muted:#5B6578; --line:#DDE2EA;
@@ -121,8 +121,6 @@ button.send:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
   </section>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 /* ===== الإعداد: الصق إعدادات Firebase هنا (اتركها null للوضع التجريبي) ===== */
 const FIREBASE_CONFIG = {
@@ -133,8 +131,6 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "412216916396",
   appId: "1:412216916396:web:ef0b8c20ee98209d7ae209",
   measurementId: "G-SPJVRWT3W5"
-
-
 };
 /* مثال:
 const FIREBASE_CONFIG = {
@@ -148,30 +144,36 @@ const grid = $('grid'), text = $('text'), send = $('send'), msg = $('msg');
 let items = [], filter = 'all', store;
 
 /* ---------- التخزين ---------- */
-if (FIREBASE_CONFIG && window.firebase) {
-  firebase.initializeApp(FIREBASE_CONFIG);
-  const col = firebase.firestore().collection('feedback');
-  store = {
-    add: (t, type) => col.add({ text: t, type, createdAt: firebase.firestore.FieldValue.serverTimestamp() }),
-    listen: cb => col.orderBy('createdAt', 'desc').limit(300).onSnapshot(s => {
-      cb(s.docs.map(d => {
-        const v = d.data();
-        return { id: d.id, text: v.text, type: v.type, time: v.createdAt ? v.createdAt.toMillis() : Date.now() };
-      }));
-    }, () => showMsg('تعذّر تحميل الملاحظات. تحقق من الاتصال وحاول لاحقًا.', 'err'))
-  };
-} else {
-  $('demo').classList.add('on');
-  const K = 'fb_demo';
-  const read = () => { try { return JSON.parse(localStorage.getItem(K)) || []; } catch (e) { return []; } };
+function loadScript(src){return new Promise((res,rej)=>{const t=document.createElement('script');t.src=src;t.onload=res;t.onerror=()=>rej(new Error('load'));document.head.appendChild(t);});}
+function withTimeout(p,ms){return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);}
+
+function demoStore(){
+  const K='fb_demo';
+  const read=()=>{try{return JSON.parse(localStorage.getItem(K))||[];}catch(e){return [];}};
   let cb2;
-  store = {
-    add: async (t, type) => {
-      const a = read(); a.unshift({ id: String(Date.now()), text: t, type, time: Date.now() });
-      try { localStorage.setItem(K, JSON.stringify(a.slice(0, 300))); } catch (e) {}
-      cb2 && cb2(a);
+  return {
+    add:async(t,type)=>{
+      const a=read(); a.unshift({id:String(Date.now()),text:t,type,time:Date.now()});
+      try{localStorage.setItem(K,JSON.stringify(a.slice(0,300)));}catch(e){}
+      cb2&&cb2(a);
     },
-    listen: cb => { cb2 = cb; cb(read()); }
+    listen:cb=>{cb2=cb;cb(read());}
+  };
+}
+
+async function firebaseStore(){
+  await withTimeout(loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js'),12000);
+  await withTimeout(loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js'),12000);
+  firebase.initializeApp(FIREBASE_CONFIG);
+  const col=firebase.firestore().collection('feedback');
+  return {
+    add:(t,type)=>col.add({text:t,type,createdAt:firebase.firestore.FieldValue.serverTimestamp()}),
+    listen:cb=>col.orderBy('createdAt','desc').limit(300).onSnapshot(sn=>{
+      cb(sn.docs.map(d=>{
+        const v=d.data();
+        return {id:d.id,text:v.text,type:v.type,time:v.createdAt?v.createdAt.toMillis():Date.now()};
+      }));
+    },()=>showMsg('تعذّر تحميل الملاحظات. تحقق من الاتصال وحاول لاحقًا.','err'))
   };
 }
 
@@ -230,6 +232,7 @@ $('filters').addEventListener('click', e => {
 });
 send.addEventListener('click', async () => {
   if ($('hp').value) return;                       // فخ للروبوتات
+  if (!store) { showMsg('الخدمة غير متصلة الآن. جرّب شبكة أخرى أو أعد تحميل الصفحة.', 'err'); return; }
   const t = text.value.trim(); if (t.length < 3) return;
   const type = chosenType();
   if (!type) { showMsg('اختر نوع الملاحظة (إيجابية أو سلبية) أولًا.', 'err'); return; }
@@ -249,10 +252,23 @@ send.addEventListener('click', async () => {
 });
 
 let first = true;
-store.listen(arr => {
+function onData(arr){
   if (!first && arr[0] && !items.some(x => x.id === arr[0].id)) freshId = arr[0].id;
   first = false; items = arr; render();
-});
+}
+(async () => {
+  const l = document.createElement('div'); l.className = 'empty'; l.textContent = 'جارٍ تحميل الملاحظات...'; grid.appendChild(l);
+  if (FIREBASE_CONFIG) {
+    try { store = await firebaseStore(); }
+    catch (e) {
+      store = null; grid.textContent = '';
+      const x = document.createElement('div'); x.className = 'empty';
+      x.textContent = 'تعذّر الاتصال بالخدمة. جرّب شبكة أخرى (واي فاي) أو أعد تحميل الصفحة.';
+      grid.appendChild(x); return;
+    }
+  } else { $('demo').classList.add('on'); store = demoStore(); }
+  store.listen(onData);
+})();
 </script>
 </body>
 </html>
