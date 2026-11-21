@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>رأيك في أسلوب التدريس</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F4F8; --surface:#FFFFFF; --ink:#16213A; --muted:#5B6578; --line:#DDE2EA;
+  --pos:#1C7C6B; --pos-bg:#E7F4F1; --neg:#B5443A; --neg-bg:#FBEDEB; --accent:#16213A;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0F1524; --surface:#18203A; --ink:#E9EDF6; --muted:#9AA5BC; --line:#2A3558;
+    --pos:#4CC3AC; --pos-bg:#143530; --neg:#F08A7E; --neg-bg:#3A1F25; --accent:#E9EDF6;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:16px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;line-height:1.7;font-size:16px}
+.wrap{max-width:1080px;margin:0 auto;padding:40px 20px 64px}
+header{margin-bottom:28px}
+h1{font-size:clamp(1.7rem,4vw,2.4rem);line-height:1.3;margin:0 0 10px;font-weight:700}
+.lead{margin:0;color:var(--muted);max-width:60ch}
+.notice{display:flex;gap:10px;align-items:flex-start;margin-top:18px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:.95rem}
+.notice svg{flex:none;margin-top:4px}
+.demo{display:none;margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--neg-bg);color:var(--neg);font-size:.9rem}
+.demo.on{display:block}
+
+.composer{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:36px}
+.composer h2{font-size:1.1rem;margin:0 0 14px}
+.types{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.types input{position:absolute;opacity:0;pointer-events:none}
+.types label{cursor:pointer;padding:8px 18px;border:1.5px solid var(--line);border-radius:999px;font-weight:500;font-size:.95rem;color:var(--muted)}
+.types input:focus-visible+label{outline:3px solid var(--accent);outline-offset:2px}
+.types input[value=pos]:checked+label{border-color:var(--pos);background:var(--pos-bg);color:var(--pos)}
+.types input[value=neg]:checked+label{border-color:var(--neg);background:var(--neg-bg);color:var(--neg)}
+.help{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-bottom:16px}
+.help .h{font-size:.88rem;line-height:1.7;padding:10px 12px;border-radius:10px;color:var(--ink)}
+.help .h.pos{background:var(--pos-bg);border:1px solid var(--pos)}
+.help .h.neg{background:var(--neg-bg);border:1px solid var(--neg)}
+textarea{width:100%;min-height:130px;resize:vertical;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+textarea:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
+.count{font-size:.85rem;color:var(--muted)}
+button.send{background:var(--accent);color:var(--bg);border:0;border-radius:10px;padding:10px 26px;font:inherit;font-weight:600;cursor:pointer}
+button.send:disabled{opacity:.45;cursor:not-allowed}
+button.send:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.msg{min-height:1.5em;margin-top:10px;font-size:.92rem}
+.msg.ok{color:var(--pos)} .msg.err{color:var(--neg)}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+
+.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.bar h2{margin:0;font-size:1.25rem}
+.filters{display:flex;gap:6px}
+.filters button{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 14px;font:inherit;font-size:.9rem;cursor:pointer}
+.filters button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.filters button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-inline-start:5px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.card.pos{border-inline-start-color:var(--pos)}
+.card.neg{border-inline-start-color:var(--neg)}
+.card p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.meta{display:flex;justify-content:space-between;font-size:.82rem;color:var(--muted);margin-top:auto}
+.tag{font-weight:600}
+.card.pos .tag{color:var(--pos)} .card.neg .tag{color:var(--neg)}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:40px 0;border:1px dashed var(--line);border-radius:12px}
+@media (prefers-reduced-motion:no-preference){ .card.fresh{animation:pop .4s ease-out} }
+@keyframes pop{from{transform:scale(.97);opacity:.4}to{transform:none;opacity:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>رأيك في أسلوب التدريس</h1>
+    <p class="lead">اكتب ما يعجبك وما لا يعجبك، بصراحة. هدفي أن أطوّر طريقة الشرح بناءً على ملاحظاتكم.</p>
+    <div class="notice">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <span>مجهول بالكامل: لا نطلب اسمًا ولا بريدًا ولا أي معلومة عنك، ولا نحفظ أي بيانات تعريفية.</span>
+    </div>
+    <div class="demo" id="demo">وضع تجريبي: الملاحظات تُحفظ في متصفحك فقط. اربط Firebase (الخطوات في الأسفل) لتظهر ملاحظات الجميع.</div>
+  </header>
+
+  <section class="composer" aria-labelledby="ch">
+    <h2 id="ch">أضف ملاحظتك</h2>
+    <p class="count" style="margin:0 0 8px">اختر نوع ملاحظتك أولًا (مطلوب):</p>
+    <div class="types" role="radiogroup" aria-label="نوع الملاحظة">
+      <span><input type="radio" name="type" id="t-pos" value="pos"><label for="t-pos">إيجابية</label></span>
+      <span><input type="radio" name="type" id="t-neg" value="neg"><label for="t-neg">سلبية</label></span>
+    </div>
+    <div class="help">
+      <div class="h pos"><strong>اختر «إيجابية»</strong> إذا كان هناك شيء أعجبك أو ساعدك على الفهم، مثل: شرح واضح، أمثلة مفيدة، تفاعل جيد، أو طريقة تريد أن تستمر.</div>
+      <div class="h neg"><strong>اختر «سلبية»</strong> إذا كان هناك شيء صعّب عليك أو تتمنى تغييره، مثل: سرعة الشرح، قلة الأمثلة، طريقة التقييم، أو أي نقطة تحتاج تحسينًا.</div>
+    </div>
+    <label for="text" class="count" style="display:block;margin-bottom:6px">ماذا تريد أن تقول؟</label>
+    <textarea id="text" maxlength="500" placeholder="مثال: الشرح واضح لكن أحتاج أمثلة أكثر على المسائل..."></textarea>
+    <input class="hp" id="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <div class="row">
+      <span class="count"><span id="n">0</span> / 500</span>
+      <button class="send" id="send" disabled>إرسال الملاحظة</button>
+    </div>
+    <div class="msg" id="msg" role="status" aria-live="polite"></div>
+  </section>
+
+  <section aria-labelledby="lh">
+    <div class="bar">
+      <h2 id="lh">ملاحظات الطلاب <span class="count" id="total"></span></h2>
+      <div class="filters" id="filters">
+        <button data-f="all" aria-pressed="true">الكل</button>
+        <button data-f="pos" aria-pressed="false">الإيجابية</button>
+        <button data-f="neg" aria-pressed="false">السلبية</button>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ===== الإعداد: الصق إعدادات Firebase هنا (اتركها null للوضع التجريبي) ===== */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAewZdfSkRxESPZ9rtEwzib-L16Cysuezw",
+  authDomain: "feedback-f2837.firebaseapp.com",
+  projectId: "feedback-f2837",
+  storageBucket: "feedback-f2837.firebasestorage.app",
+  messagingSenderId: "412216916396",
+  appId: "1:412216916396:web:ef0b8c20ee98209d7ae209",
+  measurementId: "G-SPJVRWT3W5"
+
+
+};
+/* مثال:
+const FIREBASE_CONFIG = {
+  apiKey: "...", authDomain: "...", projectId: "...", appId: "..."
+};
+*/
+/* ======================================================================== */
+
+const $ = id => document.getElementById(id);
+const grid = $('grid'), text = $('text'), send = $('send'), msg = $('msg');
+let items = [], filter = 'all', store;
+
+/* ---------- التخزين ---------- */
+if (FIREBASE_CONFIG && window.firebase) {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  const col = firebase.firestore().collection('feedback');
+  store = {
+    add: (t, type) => col.add({ text: t, type, createdAt: firebase.firestore.FieldValue.serverTimestamp() }),
+    listen: cb => col.orderBy('createdAt', 'desc').limit(300).onSnapshot(s => {
+      cb(s.docs.map(d => {
+        const v = d.data();
+        return { id: d.id, text: v.text, type: v.type, time: v.createdAt ? v.createdAt.toMillis() : Date.now() };
+      }));
+    }, () => showMsg('تعذّر تحميل الملاحظات. تحقق من الاتصال وحاول لاحقًا.', 'err'))
+  };
+} else {
+  $('demo').classList.add('on');
+  const K = 'fb_demo';
+  const read = () => { try { return JSON.parse(localStorage.getItem(K)) || []; } catch (e) { return []; } };
+  let cb2;
+  store = {
+    add: async (t, type) => {
+      const a = read(); a.unshift({ id: String(Date.now()), text: t, type, time: Date.now() });
+      try { localStorage.setItem(K, JSON.stringify(a.slice(0, 300))); } catch (e) {}
+      cb2 && cb2(a);
+    },
+    listen: cb => { cb2 = cb; cb(read()); }
+  };
+}
+
+/* ---------- العرض ---------- */
+function ago(ms) {
+  const m = Math.floor((Date.now() - ms) / 60000);
+  if (m < 1) return 'الآن';
+  if (m < 60) return 'منذ ' + m + ' دقيقة';
+  const h = Math.floor(m / 60);
+  if (h < 24) return 'منذ ' + h + ' ساعة';
+  return new Date(ms).toLocaleDateString('ar', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+let freshId = null;
+function render() {
+  const list = items.filter(i => filter === 'all' || i.type === filter);
+  $('total').textContent = '(' + items.length + ')';
+  grid.textContent = '';
+  if (!list.length) {
+    const e = document.createElement('div');
+    e.className = 'empty';
+    e.textContent = items.length ? 'لا توجد ملاحظات من هذا النوع.' : 'لا توجد ملاحظات بعد. كن أول من يكتب.';
+    grid.appendChild(e);
+    return;
+  }
+  list.forEach(i => {
+    const c = document.createElement('article');
+    c.className = 'card ' + (i.type === 'neg' ? 'neg' : 'pos') + (i.id === freshId ? ' fresh' : '');
+    const p = document.createElement('p'); p.textContent = i.text;
+    const m = document.createElement('div'); m.className = 'meta';
+    const t = document.createElement('span'); t.className = 'tag'; t.textContent = i.type === 'neg' ? 'سلبية' : 'إيجابية';
+    const d = document.createElement('span'); d.textContent = ago(i.time);
+    m.append(t, d); c.append(p, m); grid.appendChild(c);
+  });
+}
+function showMsg(t, cls) { msg.textContent = t; msg.className = 'msg ' + (cls || ''); }
+
+/* ---------- التفاعل ---------- */
+const chosenType = () => { const r = document.querySelector('input[name=type]:checked'); return r ? r.value : null; };
+function updateSend() {
+  const hasText = text.value.trim().length >= 3;
+  const hasType = !!chosenType();
+  send.disabled = !(hasText && hasType);
+  if (hasText && !hasType) showMsg('اختر نوع الملاحظة (إيجابية أو سلبية) لتتمكن من الإرسال.', 'err');
+  else if (msg.classList.contains('err') && hasType) showMsg('', '');
+}
+text.addEventListener('input', () => {
+  $('n').textContent = text.value.length;
+  updateSend();
+});
+document.querySelectorAll('input[name=type]').forEach(r => r.addEventListener('change', updateSend));
+$('filters').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  filter = b.dataset.f;
+  [...$('filters').children].forEach(x => x.setAttribute('aria-pressed', x === b));
+  render();
+});
+send.addEventListener('click', async () => {
+  if ($('hp').value) return;                       // فخ للروبوتات
+  const t = text.value.trim(); if (t.length < 3) return;
+  const type = chosenType();
+  if (!type) { showMsg('اختر نوع الملاحظة (إيجابية أو سلبية) أولًا.', 'err'); return; }
+  let last = 0; try { last = +localStorage.getItem('fb_last') || 0; } catch (e) {}
+  if (Date.now() - last < 20000) { showMsg('انتظر قليلًا قبل إرسال ملاحظة أخرى.', 'err'); return; }
+  send.disabled = true;
+  try {
+    await store.add(t, type);
+    try { localStorage.setItem('fb_last', Date.now()); } catch (e) {}
+    text.value = ''; $('n').textContent = '0';
+    document.querySelectorAll('input[name=type]').forEach(r => r.checked = false);
+    showMsg('وصلت ملاحظتك. شكرًا لك.', 'ok');
+  } catch (e) {
+    showMsg('لم يتم الإرسال. حاول مرة أخرى.', 'err');
+    send.disabled = false;
+  }
+});
+
+let first = true;
+store.listen(arr => {
+  if (!first && arr[0] && !items.some(x => x.id === arr[0].id)) freshId = arr[0].id;
+  first = false; items = arr; render();
+});
+</script>
+</body>
+</html>
