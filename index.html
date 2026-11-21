@@ -53,7 +53,8 @@ button.send:disabled{opacity:.45;cursor:not-allowed}
 button.send:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .msg{min-height:1.5em;margin-top:10px;font-size:.92rem}
 .msg.ok{color:var(--pos)} .msg.err{color:var(--neg)}
-.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.hp{position:absolute;top:0;right:0;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);opacity:0;pointer-events:none}
+html,body{overflow-x:hidden}
 
 .bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .bar h2{margin:0;font-size:1.25rem}
@@ -76,6 +77,8 @@ button.send:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 </style>
 </head>
 <body>
+<div id="dbg" style="font:12px monospace;padding:6px 10px;border-bottom:1px dashed #888;overflow-wrap:anywhere">نسخة 4</div>
+<script>window.addEventListener('error',function(e){var d=document.getElementById('dbg');if(d)d.textContent+=' | خطأ: '+e.message+' سطر '+e.lineno;});</script>
 <div class="wrap">
   <header>
     <h1>رأيك في أسلوب التدريس</h1>
@@ -131,6 +134,8 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "412216916396",
   appId: "1:412216916396:web:ef0b8c20ee98209d7ae209",
   measurementId: "G-SPJVRWT3W5"
+
+
 };
 /* مثال:
 const FIREBASE_CONFIG = {
